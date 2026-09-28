@@ -8,3 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Data storage
+
+App state (drivers, orders, draft, language, home address) is kept in localStorage via `usePersistentState` — drivers must keep working offline on the highway. No backend yet.
