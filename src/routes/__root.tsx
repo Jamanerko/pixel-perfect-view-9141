@@ -77,11 +77,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Аралық жеткізу / Межгород Логистика" },
+      {
+        name: "description",
+        content:
+          "Маршрут, касса и навигация для междугородних водителей. KZ / RU.",
+      },
+      { property: "og:title", content: "Аралық жеткізу / Межгород Логистика" },
+      {
+        property: "og:description",
+        content: "Маршрут, касса и навигация для междугородних водителей.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
