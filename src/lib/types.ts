@@ -9,6 +9,10 @@ export type Order = {
   deferred: boolean;
   createdAt: number;
   seq: number;
+  /** Last local change, used for last-write-wins cloud sync. */
+  updatedAt?: number;
+  /** Soft delete so removals also reach other devices. */
+  removed?: boolean;
 };
 
 export type Driver = {
