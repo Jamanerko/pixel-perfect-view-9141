@@ -14,7 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      drivers: {
+        Row: {
+          created_at: string
+          id: string
+          last_seen: string
+          name: string
+          orders_total: number
+          phone: string
+          pin_hash: string
+          pro_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_seen?: string
+          name: string
+          orders_total?: number
+          phone: string
+          pin_hash: string
+          pro_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_seen?: string
+          name?: string
+          orders_total?: number
+          phone?: string
+          pin_hash?: string
+          pro_until?: string | null
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          address: string
+          amount: number
+          created_at: number
+          deferred: boolean
+          delivered: boolean
+          driver_id: string
+          id: string
+          note: string
+          paid: boolean
+          phone: string
+          removed: boolean
+          seq: number
+          updated_at: number
+        }
+        Insert: {
+          address?: string
+          amount?: number
+          created_at?: number
+          deferred?: boolean
+          delivered?: boolean
+          driver_id: string
+          id: string
+          note?: string
+          paid?: boolean
+          phone?: string
+          removed?: boolean
+          seq?: number
+          updated_at?: number
+        }
+        Update: {
+          address?: string
+          amount?: number
+          created_at?: number
+          deferred?: boolean
+          delivered?: boolean
+          driver_id?: string
+          id?: string
+          note?: string
+          paid?: boolean
+          phone?: string
+          removed?: boolean
+          seq?: number
+          updated_at?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
