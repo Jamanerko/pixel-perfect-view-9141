@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import type { Database } from "@/integrations/supabase/types";
 import type { Driver, Order } from "@/lib/types";
 import { ADMIN_PHONE } from "@/lib/types";
 
@@ -47,7 +48,7 @@ function toDriver(row: DriverRow): Driver {
     createdAt: new Date(row.created_at).getTime(),
     ordersTotal: row.orders_total,
     proUntil: row.pro_until ? new Date(row.pro_until).getTime() : null,
-    lastSeen: row.last_seen ? new Date(row.last_seen).getTime() : undefined,
+    ...(row.last_seen ? { lastSeen: new Date(row.last_seen).getTime() } : {}),
     blocked: !!row.blocked,
     adminNote: row.admin_note ?? "",
   };
@@ -267,7 +268,7 @@ export const cloudAdminAction = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!row) return { status: "not_found" as const };
 
-    let patch: Record<string, unknown> | null = null;
+    let patch: Database["public"]["Tables"]["drivers"]["Update"] = {};
     switch (a.kind) {
       case "extend": {
         const cur = row.pro_until ? new Date(row.pro_until).getTime() : 0;
