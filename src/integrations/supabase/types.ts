@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       drivers: {
         Row: {
+          admin_note: string
+          blocked: boolean
           created_at: string
           id: string
           last_seen: string
@@ -26,6 +28,8 @@ export type Database = {
           pro_until: string | null
         }
         Insert: {
+          admin_note?: string
+          blocked?: boolean
           created_at?: string
           id?: string
           last_seen?: string
@@ -36,6 +40,8 @@ export type Database = {
           pro_until?: string | null
         }
         Update: {
+          admin_note?: string
+          blocked?: boolean
           created_at?: string
           id?: string
           last_seen?: string

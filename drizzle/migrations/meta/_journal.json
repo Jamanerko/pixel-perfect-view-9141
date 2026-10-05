@@ -8,6 +8,13 @@
       "when": 1790582301760,
       "tag": "0000_cloud_sync_drivers_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791179624368,
+      "tag": "0001_driver_admin_fields",
+      "breakpoints": true
     }
   ]
 }
