@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useMemo, useState } from "react";
 
 import { AdminPanel } from "@/components/AdminPanel";
 import { AuthScreen } from "@/components/AuthScreen";
@@ -8,6 +9,7 @@ import { OrderCard } from "@/components/OrderCard";
 import { OrderForm } from "@/components/OrderForm";
 import { PayModal } from "@/components/PayModal";
 import { ProfilePanel } from "@/components/ProfilePanel";
+import { cloudAuth } from "@/lib/cloud.functions";
 import { t, type Lang } from "@/lib/i18n";
 import { districtBreakdown, mapLinks, optimize, sortForDisplay } from "@/lib/route-optimizer";
 import { usePersistentState } from "@/lib/storage";
@@ -47,6 +49,23 @@ function App() {
   const [payOpen, setPayOpen] = useState(false);
 
   const driver = drivers.find((d) => d.phone === sessionPhone) ?? null;
+  const checkCloud = useServerFn(cloudAuth);
+
+  // Blocked drivers are signed out as soon as the device is online.
+  useEffect(() => {
+    if (!driver?.pin) return;
+    checkCloud({ data: { phone: driver.phone, pin: driver.pin, name: driver.name } })
+      .then((r) => {
+        if (r.status === "blocked") {
+          alert(lang === "kk" ? "Аккаунт бұғатталған" : "Аккаунт заблокирован администратором");
+          setSessionPhone(null);
+        } else if (r.status === "ok") {
+          patchDriver(driver.phone, { proUntil: r.driver.proUntil, name: r.driver.name });
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [driver?.phone]);
   const isAdmin = driver?.phone === ADMIN_PHONE;
   const isPro = !!driver?.proUntil && driver.proUntil > Date.now();
   const blocked = !!driver && !isPro && driver.ordersTotal >= FREE_LIMIT;
@@ -240,13 +259,7 @@ function App() {
       )}
 
       {tab === "admin" && isAdmin && (
-        <AdminPanel
-          lang={lang}
-          drivers={drivers}
-          onActivate={(phone) =>
-            patchDriver(phone, { proUntil: Date.now() + 30 * 864e5 })
-          }
-        />
+        <AdminPanel lang={lang} admin={driver} localDrivers={drivers} />
       )}
 
       {payOpen && <PayModal lang={lang} onClose={() => setPayOpen(false)} />}

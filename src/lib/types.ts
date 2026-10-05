@@ -22,6 +22,9 @@ export type Driver = {
   createdAt: number;
   ordersTotal: number;
   proUntil: number | null;
+  lastSeen?: number;
+  blocked?: boolean;
+  adminNote?: string;
 };
 
 export const ADMIN_PHONE = "+77014511661";
