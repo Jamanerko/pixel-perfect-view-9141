@@ -168,6 +168,64 @@ export function AdminPanel({
         ))}
       </div>
 
+      {drivers.some((d) => d.activated === false) && (
+        <div className="space-y-2 rounded-2xl bg-gold/10 p-3 ring-1 ring-gold/30">
+          <p className="num text-[11px] uppercase tracking-[0.18em] text-gold">
+            {L("Жаңа өтінімдер", "Новые заявки")} · {drivers.filter((d) => d.activated === false).length}
+          </p>
+          {drivers
+            .filter((d) => d.activated === false)
+            .sort((a, b) => b.createdAt - a.createdAt)
+            .map((d) => {
+              const msg = L(
+                `Сәлеметсіз бе, ${d.name}! Кіру үшін құпия сөз: ${d.invitePin}\nНөмір: ${d.phone}\n${typeof window !== "undefined" ? window.location.origin : ""}`,
+                `Здравствуйте, ${d.name}! Ваш пароль для входа: ${d.invitePin}\nНомер: ${d.phone}\n${typeof window !== "undefined" ? window.location.origin : ""}`,
+              );
+              return (
+                <div key={d.phone} className="rounded-xl bg-ink/60 p-3 ring-1 ring-edge">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">{d.name}</p>
+                      <p className="num text-xs text-ice">{d.phone}</p>
+                    </div>
+                    <p className="num text-2xl font-bold tracking-[0.3em] text-gold">
+                      {d.invitePin ?? "—"}
+                    </p>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => {
+                        void navigator.clipboard?.writeText(d.invitePin ?? "");
+                        setToast(L("Көшірілді", "Скопировано"));
+                        setTimeout(() => setToast(""), 1500);
+                      }}
+                      className="min-h-12 rounded-xl bg-panel text-sm font-bold ring-1 ring-edge"
+                    >
+                      {L("Көшіру", "Копировать")}
+                    </button>
+                    <a
+                      href={`https://wa.me/${d.phone.replace(/\D/g, "")}?text=${encodeURIComponent(msg)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex min-h-12 items-center justify-center rounded-xl bg-mint/20 text-sm font-bold text-mint ring-1 ring-mint/40"
+                    >
+                      WhatsApp
+                    </a>
+                  </div>
+                  <button
+                    onClick={() =>
+                      void run(d.phone, { kind: "new_invite" }, L("Жаңа құпия сөз", "Новый пароль создан"))
+                    }
+                    className="mt-2 min-h-10 w-full rounded-xl text-xs text-mute ring-1 ring-edge"
+                  >
+                    {L("Жаңа құпия сөз ↻", "Сгенерировать новый ↻")}
+                  </button>
+                </div>
+              );
+            })}
+        </div>
+      )}
+
       {shown.length === 0 && (
         <p className="rounded-2xl bg-frost/40 p-6 text-center text-sm text-dim ring-1 ring-edge">
           {t("noDrivers", lang)}
