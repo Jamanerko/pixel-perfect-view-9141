@@ -23,7 +23,15 @@ type DriverRow = {
   last_seen?: string;
   blocked?: boolean;
   admin_note?: string;
+  activated?: boolean;
+  invite_pin?: string | null;
 };
+
+function genPin() {
+  const a = new Uint32Array(1);
+  crypto.getRandomValues(a);
+  return String(a[0] % 10000).padStart(4, "0");
+}
 
 type OrderRow = {
   id: string;
@@ -51,6 +59,8 @@ function toDriver(row: DriverRow): Driver {
     ...(row.last_seen ? { lastSeen: new Date(row.last_seen).getTime() } : {}),
     blocked: !!row.blocked,
     adminNote: row.admin_note ?? "",
+    activated: row.activated !== false,
+    invitePin: row.invite_pin ?? null,
   };
 }
 
@@ -72,7 +82,7 @@ function toOrder(row: OrderRow): Order {
 }
 
 const DRIVER_COLS =
-  "id, phone, name, created_at, orders_total, pro_until, last_seen, blocked, admin_note";
+  "id, phone, name, created_at, orders_total, pro_until, last_seen, blocked, admin_note, activated, invite_pin";
 const ORDER_COLS =
   "id, address, phone, paid, amount, note, delivered, deferred, seq, removed, created_at, updated_at";
 
@@ -110,33 +120,43 @@ export const cloudAuth = createServerFn({ method: "POST" })
 
     if (existing) {
       const hash = await hashPin(data.phone, data.pin);
-      if ((existing as { pin_hash: string }).pin_hash !== hash) {
-        return { status: "wrong_pin" as const };
+      const ex = existing as unknown as DriverRow & { pin_hash: string };
+      if (ex.pin_hash !== hash) {
+        return { status: ex.activated === false ? ("pending" as const) : ("wrong_pin" as const) };
       }
-      if ((existing as { blocked?: boolean }).blocked) return { status: "blocked" as const };
-      await db.from("drivers").update({ last_seen: new Date().toISOString() }).eq("phone", data.phone);
-      return { status: "ok" as const, driver: toDriver(existing as unknown as DriverRow) };
+      if (ex.blocked) return { status: "blocked" as const };
+      await db
+        .from("drivers")
+        .update({ last_seen: new Date().toISOString(), activated: true, invite_pin: null })
+        .eq("phone", data.phone);
+      return {
+        status: "ok" as const,
+        driver: toDriver({ ...ex, activated: true, invite_pin: null }),
+      };
     }
 
     if (!data.name?.trim()) return { status: "need_name" as const };
 
-    const proUntil =
-      data.phone === ADMIN_PHONE
-        ? new Date(Date.now() + 3650 * 864e5).toISOString()
-        : null;
+    const isAdmin = data.phone === ADMIN_PHONE;
+    const proUntil = isAdmin ? new Date(Date.now() + 3650 * 864e5).toISOString() : null;
+    // New drivers cannot choose a PIN: the admin sends a generated one via WhatsApp.
+    const invite = genPin();
 
     const { data: created, error } = await db
       .from("drivers")
       .insert({
         phone: data.phone,
         name: data.name.trim(),
-        pin_hash: await hashPin(data.phone, data.pin),
+        pin_hash: await hashPin(data.phone, isAdmin ? data.pin : invite),
         pro_until: proUntil,
+        activated: isAdmin,
+        invite_pin: isAdmin ? null : invite,
       })
       .select(DRIVER_COLS)
       .single();
 
     if (error || !created) return { status: "error" as const };
+    if (!isAdmin) return { status: "pending" as const };
     return { status: "ok" as const, driver: toDriver(created as unknown as DriverRow) };
   });
 
@@ -245,6 +265,7 @@ type AdminAction =
   | { kind: "block" }
   | { kind: "unblock" }
   | { kind: "reset_pin"; newPin: string }
+  | { kind: "new_invite" }
   | { kind: "rename"; name: string }
   | { kind: "note"; note: string }
   | { kind: "reset_orders" }
@@ -290,6 +311,11 @@ export const cloudAdminAction = createServerFn({ method: "POST" })
         if (!/^\d{4}$/.test(a.newPin)) return { status: "bad_input" as const };
         patch = { pin_hash: await hashPin(data.target, a.newPin) };
         break;
+      case "new_invite": {
+        const pin = genPin();
+        patch = { pin_hash: await hashPin(data.target, pin), invite_pin: pin, activated: false };
+        break;
+      }
       case "rename":
         if (!a.name.trim()) return { status: "bad_input" as const };
         patch = { name: a.name.trim().slice(0, 80) };
