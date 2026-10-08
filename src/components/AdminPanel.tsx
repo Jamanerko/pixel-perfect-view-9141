@@ -440,6 +440,16 @@ function DriverActions({
             {L("PIN ауыстыру", "Сменить PIN")}
           </button>
         </div>
+        {d.phone !== ADMIN_PHONE && (
+          <button
+            onClick={() =>
+              run({ kind: "new_invite" }, L("Жаңа құпия сөз — жоғарыда", "Новый пароль — вверху списка"))
+            }
+            className={`${btn} w-full bg-mint/15 text-mint ring-mint/30`}
+          >
+            {L("Жаңа құпия сөз (WhatsApp)", "Выдать новый пароль (WhatsApp)")}
+          </button>
+        )}
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
