@@ -15,6 +15,13 @@
       "when": 1791179624368,
       "tag": "0001_driver_admin_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791466336245,
+      "tag": "0002_driver_invites",
+      "breakpoints": true
     }
   ]
 }

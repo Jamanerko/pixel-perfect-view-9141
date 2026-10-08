@@ -16,10 +16,12 @@ export type Database = {
     Tables: {
       drivers: {
         Row: {
+          activated: boolean
           admin_note: string
           blocked: boolean
           created_at: string
           id: string
+          invite_pin: string | null
           last_seen: string
           name: string
           orders_total: number
@@ -28,10 +30,12 @@ export type Database = {
           pro_until: string | null
         }
         Insert: {
+          activated?: boolean
           admin_note?: string
           blocked?: boolean
           created_at?: string
           id?: string
+          invite_pin?: string | null
           last_seen?: string
           name: string
           orders_total?: number
@@ -40,10 +44,12 @@ export type Database = {
           pro_until?: string | null
         }
         Update: {
+          activated?: boolean
           admin_note?: string
           blocked?: boolean
           created_at?: string
           id?: string
+          invite_pin?: string | null
           last_seen?: string
           name?: string
           orders_total?: number

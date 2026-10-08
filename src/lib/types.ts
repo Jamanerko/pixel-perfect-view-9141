@@ -25,6 +25,10 @@ export type Driver = {
   lastSeen?: number;
   blocked?: boolean;
   adminNote?: string;
+  /** False until the driver signs in with the admin-issued PIN. */
+  activated?: boolean;
+  /** Generated PIN visible to the admin until first sign-in. */
+  invitePin?: string | null;
 };
 
 export const ADMIN_PHONE = "+77014511661";

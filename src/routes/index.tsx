@@ -112,7 +112,8 @@ function App() {
           lang={lang}
           drivers={drivers}
           onAuth={(d, isNew) => {
-            if (isNew) setDrivers((list) => [...list, d]);
+            void isNew;
+            setDrivers((list) => [...list.filter((x) => x.phone !== d.phone), d]);
             setSessionPhone(d.phone);
           }}
         />
