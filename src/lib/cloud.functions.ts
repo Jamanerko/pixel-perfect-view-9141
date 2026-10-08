@@ -278,7 +278,7 @@ export const cloudAdminAction = createServerFn({ method: "POST" })
     const me = await authenticate(data.phone, data.pin);
     if (!me || me.phone !== ADMIN_PHONE) return { status: "unauthorized" as const };
     const a = data.action;
-    if (data.target === ADMIN_PHONE && (a.kind === "block" || a.kind === "delete")) {
+    if (data.target === ADMIN_PHONE && (a.kind === "block" || a.kind === "delete" || a.kind === "new_invite")) {
       return { status: "forbidden" as const };
     }
     const db = await admin();
