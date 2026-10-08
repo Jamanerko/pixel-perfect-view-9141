@@ -43,7 +43,7 @@ export function AuthScreen({
     setBusy(true);
     try {
       const r = await auth({
-        data: { phone: normalized, pin: needName ? "" : pin, name: needName ? name : undefined },
+        data: { phone: normalized, pin: needName ? "" : pin, ...(needName ? { name } : {}) },
       });
       if (r.status === "ok") return onAuth({ ...r.driver, pin }, !local);
       if (r.status === "need_name") return setNeedName(true);

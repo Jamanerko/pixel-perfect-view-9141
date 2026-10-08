@@ -30,7 +30,7 @@ type DriverRow = {
 function genPin() {
   const a = new Uint32Array(1);
   crypto.getRandomValues(a);
-  return String(a[0] % 10000).padStart(4, "0");
+  return String((a[0] ?? 0) % 10000).padStart(4, "0");
 }
 
 type OrderRow = {
