@@ -129,6 +129,13 @@ export const cloudAuth = createServerFn({ method: "POST" })
         .from("drivers")
         .update({ last_seen: new Date().toISOString(), activated: true, invite_pin: null })
         .eq("phone", data.phone);
+      if (ex.activated === false) {
+        await db
+          .from("invite_history")
+          .update({ status: "used", resolved_at: new Date().toISOString() })
+          .eq("driver_id", ex.id)
+          .eq("status", "pending");
+      }
       return {
         status: "ok" as const,
         driver: toDriver({ ...ex, activated: true, invite_pin: null }),
@@ -156,6 +163,14 @@ export const cloudAuth = createServerFn({ method: "POST" })
       .single();
 
     if (error || !created) return { status: "error" as const };
+    if (!isAdmin) {
+      await db.from("invite_history").insert({
+        driver_id: (created as { id: string }).id,
+        phone: data.phone,
+        name: data.name.trim(),
+        pin: invite,
+      });
+    }
     if (!isAdmin) return { status: "pending" as const };
     return { status: "ok" as const, driver: toDriver(created as unknown as DriverRow) };
   });
@@ -266,6 +281,7 @@ type AdminAction =
   | { kind: "unblock" }
   | { kind: "reset_pin"; newPin: string }
   | { kind: "new_invite" }
+  | { kind: "revoke_invite" }
   | { kind: "rename"; name: string }
   | { kind: "note"; note: string }
   | { kind: "reset_orders" }
@@ -284,7 +300,7 @@ export const cloudAdminAction = createServerFn({ method: "POST" })
     const db = await admin();
     const { data: row } = await db
       .from("drivers")
-      .select("id, pro_until")
+      .select("id, pro_until, name")
       .eq("phone", data.target)
       .maybeSingle();
     if (!row) return { status: "not_found" as const };
@@ -311,8 +327,26 @@ export const cloudAdminAction = createServerFn({ method: "POST" })
         if (!/^\d{4}$/.test(a.newPin)) return { status: "bad_input" as const };
         patch = { pin_hash: await hashPin(data.target, a.newPin) };
         break;
+      case "revoke_invite": {
+        await db
+          .from("invite_history")
+          .update({ status: "revoked", resolved_at: new Date().toISOString() })
+          .eq("driver_id", row.id)
+          .eq("status", "pending");
+        // Unguessable hash so the revoked PIN stops working.
+        patch = { invite_pin: null, pin_hash: await hashPin(data.target, crypto.randomUUID()) };
+        break;
+      }
       case "new_invite": {
         const pin = genPin();
+        await db
+          .from("invite_history")
+          .update({ status: "revoked", resolved_at: new Date().toISOString() })
+          .eq("driver_id", row.id)
+          .eq("status", "pending");
+        await db
+          .from("invite_history")
+          .insert({ driver_id: row.id, phone: data.target, name: row.name, pin });
         patch = { pin_hash: await hashPin(data.target, pin), invite_pin: pin, activated: false };
         break;
       }
@@ -335,4 +369,30 @@ export const cloudAdminAction = createServerFn({ method: "POST" })
     const { error } = await db.from("drivers").update(patch).eq("id", row.id);
     if (error) return { status: "error" as const };
     return { status: "ok" as const };
+  });
+
+/** Admin-only: invite PIN history, newest first. */
+export const cloudInviteHistory = createServerFn({ method: "POST" })
+  .inputValidator((d: Creds) => d)
+  .handler(async ({ data }) => {
+    const me = await authenticate(data.phone, data.pin);
+    if (!me || me.phone !== ADMIN_PHONE) return { status: "unauthorized" as const, items: [] };
+    const db = await admin();
+    const { data: rows } = await db
+      .from("invite_history")
+      .select("id, phone, name, pin, status, issued_at, resolved_at")
+      .order("issued_at", { ascending: false })
+      .limit(300);
+    return {
+      status: "ok" as const,
+      items: (rows ?? []).map((r) => ({
+        id: r.id,
+        phone: r.phone,
+        name: r.name,
+        pin: r.status === "pending" ? r.pin : "••••",
+        status: r.status as "pending" | "used" | "revoked",
+        issuedAt: new Date(r.issued_at).getTime(),
+        resolvedAt: r.resolved_at ? new Date(r.resolved_at).getTime() : null,
+      })),
+    };
   });
