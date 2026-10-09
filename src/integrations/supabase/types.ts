@@ -59,6 +59,47 @@ export type Database = {
         }
         Relationships: []
       }
+      invite_history: {
+        Row: {
+          driver_id: string
+          id: string
+          issued_at: string
+          name: string
+          phone: string
+          pin: string
+          resolved_at: string | null
+          status: string
+        }
+        Insert: {
+          driver_id: string
+          id?: string
+          issued_at?: string
+          name?: string
+          phone: string
+          pin: string
+          resolved_at?: string | null
+          status?: string
+        }
+        Update: {
+          driver_id?: string
+          id?: string
+          issued_at?: string
+          name?: string
+          phone?: string
+          pin?: string
+          resolved_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invite_history_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           address: string
