@@ -2,6 +2,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { cloudAdminAction, cloudAuth, cloudDrivers } from "@/lib/cloud.functions";
+import { InviteHistory } from "@/components/InviteHistory";
 import { t, type Lang } from "@/lib/i18n";
 import { ADMIN_PHONE, FREE_LIMIT, type Driver } from "@/lib/types";
 
@@ -220,11 +221,22 @@ export function AdminPanel({
                   >
                     {L("Жаңа құпия сөз ↻", "Сгенерировать новый ↻")}
                   </button>
+                  <button
+                    onClick={() =>
+                      confirm(L("Шақыруды қайтарып алу керек пе?", "Отозвать приглашение?")) &&
+                      void run(d.phone, { kind: "revoke_invite" }, L("Қайтарылды", "Приглашение отозвано"))
+                    }
+                    className="mt-2 min-h-10 w-full rounded-xl text-xs text-lava ring-1 ring-lava/40"
+                  >
+                    {L("Қайтарып алу ✕", "Отозвать ✕")}
+                  </button>
                 </div>
               );
             })}
         </div>
       )}
+
+      <InviteHistory lang={lang} creds={creds} refreshKey={drivers} />
 
       {shown.length === 0 && (
         <p className="rounded-2xl bg-frost/40 p-6 text-center text-sm text-dim ring-1 ring-edge">
